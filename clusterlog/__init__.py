@@ -5,6 +5,8 @@ using the DatagramHandler.
 import logging
 import logging.handlers
 import os
+import socket
+import types
 
 logger = logging.getLogger("clusterlog.clusterlog")
 
@@ -100,11 +102,16 @@ def getLogger(name):
     This creates a logger to use as a logging class.
     You call this with log.info("message"), log.debug("message"), or the like.
     The dotted name is hierarchical and is usually named overall_module.file.
+    This also adds a trace method to the logger. It just calls
+    log() with a level of 5, as in logger.log(5, message).
 
     :param str name: This is a dotted name for the logger.
     :returns: An instance of a logger class.
     """
-    unique_name=[os.environ["HOSTNAME"].split(".")[0]]
+    if "HOSTNAME" in os.environ:
+        unique_name = [os.environ["HOSTNAME"].split(".")[0]]
+    else:
+        unique_name = [socket.gethostname()]
     if "JOB_ID" in os.environ:
         unique_name.append(os.environ["JOB_ID"])
     else:
@@ -116,4 +123,7 @@ def getLogger(name):
 
     add_task_id=logging.LoggerAdapter(logging.getLogger(name),
         { "tid" : "-".join(unique_name) })
+    def trace(self, message):
+        self.log(5, message)
+    add_task_id.trace=types.MethodType( trace, add_task_id )
     return add_task_id
