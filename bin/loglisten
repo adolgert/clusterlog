@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 '''
 This is a service to listen for messages from processes
 using the UDP logging handler, DatagramHandler. This listener is
@@ -79,23 +80,21 @@ class _OnExit(object):
 
 
 
-def loop_on_socket(out_file, log_level, batches):
+def loop_on_socket(out_file, log_level, batches, listen_port):
     if out_file:
         stream_handler = logging.FileHandler(filename=out_file)
     else:
         stream_handler = logging.StreamHandler(stream=sys.stdout)
 
-    formatter = logging.Formatter("SS%(asctime)s:%(name)s:%(levelname)s"
-                                  ":%(tid)s:%(message)s")
+    formatter = logging.Formatter(clusterlog.cluster_format())
     stream_handler.setFormatter(formatter)
     stream_handler.setLevel(log_level)
 
     if batches > 0:
         logger.debug("Handling logs in batches of {}".format(batches))
         batched_handler = logging.handlers.MemoryHandler(batches,
-            log_level, stream_handler)
-        formatter = logging.Formatter("BB%(asctime)s:%(name)s:%(levelname)s"
-                                      ":%(tid)s:%(message)s")
+            flushLevel=logging.ERROR, target=stream_handler)
+        formatter = logging.Formatter(clusterlog.cluster_format())
         batched_handler.setFormatter(formatter)
         batched_handler.setLevel(log_level)
     else:
@@ -116,13 +115,13 @@ def loop_on_socket(out_file, log_level, batches):
     on_exit=_OnExit(stream_handler, batched_handler)
     signal.signal(signal.SIGTERM, on_exit)
     signal.signal(signal.SIGINT, on_exit)
-    host, port=args.listen.split(":")
+    host, port=listen_port.split(":")
     store(bind(host, int(port)), cluster_logger)
 
 
 
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO, format="TOP %(message)s")
+def main():
+    logging.basicConfig(level=logging.INFO)
     parser = argparse.ArgumentParser(
         description="This receives logging messages from clients.")
     parser.add_argument("--listen", default="{}:{}".format(UDP_IP, UDP_PORT),
@@ -141,4 +140,8 @@ if __name__ == '__main__':
 
     log_level=clusterlog.verbosity_to_level(args)
 
-    loop_on_socket(args.out, log_level, args.batches)
+    loop_on_socket(args.out, log_level, args.batches, args.listen)
+
+
+if __name__ == '__main__':
+    main()

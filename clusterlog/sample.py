@@ -24,7 +24,7 @@ if __name__ == "__main__":
         beep_set=range(30)
 
     for beep_step in beep_set:
-        logger.log(1, "trace {}".format(beep_step))
+        logger.trace("trace {}".format(beep_step))
         logger.debug("debug {}".format(beep_step))
         logger.info("info {}".format(beep_step))
         time.sleep(1)

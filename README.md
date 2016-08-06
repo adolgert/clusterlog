@@ -4,6 +4,10 @@ Andrew Dolgert, adolgert@uw.edu
 
 This is a helper module to set up logging that sends
 messages from remote clients to a single server.
+You start a receiver program, included with the repository,
+that listens for log messages. Then start many other programs,
+on the same machine or other machines, which send log messages
+to that receiver.
 
 There are two ways to use this. One is to ask it to add arguments to
 the parser, and the other lets you pass in a logging level.
